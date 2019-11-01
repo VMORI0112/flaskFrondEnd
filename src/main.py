@@ -7,7 +7,7 @@ from flask_migrate import Migrate
 from flask_swagger import swagger
 from flask_cors import CORS
 from utils import APIException, generate_sitemap
-from models import db
+from models import db, Person
 #from models import Person
 
 app = Flask(__name__)
@@ -28,14 +28,23 @@ def handle_invalid_usage(error):
 def sitemap():
     return generate_sitemap(app)
 
-@app.route('/hello', methods=['POST', 'GET'])
+@app.route('/person', methods=['POST', 'GET'])
 def handle_person():
+    if request.method == 'GET':
+        persons = Person.query.all()
+        persons = list(map(lambda x: x.serialize(), persons))
+        return jsonify(persons), 200
 
-    response_body = {
-        "hello": "world"
-    }
+    if request.method == 'POST':
+        body = request.get_json
+        person1 = Person(
+                    username = body['username'], email = body['email'])
+        db.session.add(person1)
+        db.session.commit(person1)
+        return "ok", 200
 
-    return jsonify(response_body), 200
+    return 'invalid Method', 404
+
 
 # this only runs if `$ python src/main.py` is executed
 if __name__ == '__main__':
